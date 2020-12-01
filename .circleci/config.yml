@@ -10,12 +10,12 @@ jobs:
     steps:
       # default shell is Powershell
       - checkout
-      - run:
-          command: echo hello && echo world
-          shell: bash.exe
-      - run:
-          command: echo hello & echo world
-          shell: cmd.exe
+      #- run:
+      #    command: echo hello && echo world
+      #    shell: bash.exe
+      #- run:
+      #    command: echo hello & echo world
+      #    shell: cmd.exe
       - run:
           command: netsh interface ipv4 show excludedportrange protocol=tcp
           shell: cmd.exe
