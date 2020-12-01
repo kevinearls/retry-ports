@@ -23,7 +23,7 @@ func TestOne(t *testing.T) {
 
 	if runtime.GOOS == "windows" {
 		fmt.Println(">>>>> We're on windows")
-		cmd := exec.Command("cmd", "/C", "netsh", "interface ipv4 show excludedportrange protocol=tcp")
+		cmd := exec.Command(/*"cmd", "/C",*/ "netsh", "interface",  "ipv4",  "show",  "excludedportrange", "protocol=tcp")
 		output, err := cmd.CombinedOutput()
 		if err != nil  {
 			fmt.Errorf("netsh command got error %v\n", err)
