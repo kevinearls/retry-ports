@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net"
+	"os/exec"
 	"runtime"
 	"testing"
 )
@@ -19,4 +20,15 @@ func TestOne(t *testing.T) {
 		}
 	}
 	fmt.Println("It worked!!!")
+
+	if runtime.GOOS == "windows" {
+		fmt.Println(">>>>> We're on windows")
+		cmd := exec.Command("netsh", "interface ipv4 show excludedportrange protocol=tcp")
+		output, err := cmd.CombinedOutput()
+		if err != nil  {
+			fmt.Errorf("netsh command got error %v\n", err)
+		}
+			
+		fmt.Printf("NETSH command got: \n%s\n", string(output))
+	}
 }
