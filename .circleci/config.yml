@@ -11,9 +11,6 @@ jobs:
       # default shell is Powershell
       - checkout
       - run:
-          command: $(echo hello | Out-Host; $?) -and $(echo world | Out-Host; $?)
-          shell: powershell.exe
-      - run:
           command: echo hello && echo world
           shell: bash.exe
       - run:
@@ -22,6 +19,9 @@ jobs:
       - run:
           command: netsh interface ipv4 show excludedportrange protocol=tcp
           shell: cmd.exe
+      - run:
+          name: Get go version
+          command: go version
       - run:
           name: Unit tests
           command: go test -v ./...
