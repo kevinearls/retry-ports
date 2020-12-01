@@ -49,6 +49,17 @@ func TestExclusions(t *testing.T) {
 		}
 
 		fmt.Printf("NETSH command got: \n%s\n", string(output))
+
+		port := GetAvailablePort(exclusions)
+		fmt.Printf("Got port %d\n", port)
+
+		// Hack!  Add something we know will cause exclusions
+		newExclude := portpair{strconv.Itoa(int(port)), strconv.Itoa(int(port)+15)}
+		exclusions = append(exclusions, newExclude)
+		fmt.Printf("Added %v to exclusions\n", newExclude)
+
+		secondPort := GetAvailablePort(exclusions)
+		fmt.Printf("Got seondPort %d\n", secondPort)
 	}
 }
 
@@ -71,8 +82,6 @@ Start Port    End Port
 ----------    --------      
 
 * - Administered port exclusions.`
-
-
 
 	exclusionsText := `
 
@@ -106,12 +115,7 @@ func getExclusionsList(exclusionsText string, t *testing.T) []portpair {
 		if strings.TrimSpace(line) != "" {
 			entries := strings.Fields(strings.TrimSpace(line))
 			require.Equal(t, len(entries), 2)
-			//fmt.Printf("Pair: %s, %s\n", entries[0], entries[1])
-			first, err := strconv.Atoi(entries[0])
-			require.NoError(t, err)
-			second, _ := strconv.Atoi(entries[1])
-			require.NoError(t, err)
-			pair := portpair{first: uint16(first), last:  uint16(second),}
+			pair := portpair{entries[0], entries[1]}
 			exclusions = append(exclusions, pair)
 		}
 	}
