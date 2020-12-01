@@ -1,49 +1,23 @@
-# Golang CircleCI 2.0 configuration file
-#
-# Check https://circleci.com/docs/2.0/language-go/ for more details
 version: 2.1
 
-commands:
-  build:
-    steps:
-      - checkout
-      - run: go get -v -t -d ./...
-      - run: go test -v ./...
-
-#orbs:
-#  win: circleci/windows@2.4.0
-
-executors:
-  docker-executor:
-    docker:
-      -image: circleci/golang:1.9
+orbs:
+  win: circleci/windows@2.2.0
 
 jobs:
-  build-with-docker:
-    executor: docker-executor
-    working_directory: /go/src/github.com/kevinearls/retry-ports
+  build:
+    executor:
+      name: win/default
     steps:
-      - build
-
-
-#  build:
-#    docker:
-#      # specify the version
-#      - image: circleci/golang:1.9#
-
-      # Specify service dependencies here if necessary
-      # CircleCI maintains a library of pre-built images
-      # documented at https://circleci.com/docs/2.0/circleci-images/
-      # - image: circleci/postgres:9.4
-
-    #### TEMPLATE_NOTE: go expects specific checkout path representing url
-    #### expecting it in the form of
-    ####   /go/src/github.com/circleci/go-tool
-    ####   /go/src/bitbucket.org/circleci/go-tool
-#    working_directory: /go/src/github.com/kevinearls/retry-ports
-#    steps:
-#      - checkout
-
-      # specify any bash command here prefixed with `run: `
-#      - run: go get -v -t -d ./...
-#      - run: go test -v ./...
+      # default shell is Powershell
+      - run:
+          command: $(echo hello | Out-Host; $?) -and $(echo world | Out-Host; $?)
+          shell: powershell.exe
+      - run:
+          command: echo hello && echo world
+          shell: bash.exe
+      - run:
+          command: echo hello & echo world
+          shell: cmd.exe
+      - run:
+          command: netsh interface ipv4 show excludedportrange protocol=tcp
+          shell: cmd.exe
