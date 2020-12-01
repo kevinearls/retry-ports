@@ -15,7 +15,7 @@ type  portpair struct {
 
 func main() {
     exclusions := []portpair{{49692,49791 }, {49792, 49891}, {49892, 49991}, {49992, 50091}, {50092, 50191}, {50214, 50313}, {50498, 50597}, {}}
-    fmt.Printf("%s\n", len(exclusions))
+    fmt.Printf("%d\n", len(exclusions))
     fmt.Printf("OS? %v \n", runtime.GOOS)
 
     /*ln, _ := net.Listen("tcp", "localhost:0")
