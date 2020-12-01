@@ -17,37 +17,16 @@ import (
 	"testing"
 )
 
-func TestNetSHCommand(t *testing.T) {
-	fmt.Printf("Runtime.GOOS is %v\n", runtime.GOOS)
-
-	if runtime.GOOS == "windows" {
-		fmt.Println(">>>>> We're on windows")
-		cmd := exec.Command(/*"cmd", "/C",*/ "netsh", "interface",  "ipv4",  "show",  "excludedportrange", "protocol=tcp")
-		output, err := cmd.CombinedOutput()
-		if err != nil  {
-			fmt.Errorf("netsh command got error %v\n", err)
-		}
-
-		fmt.Printf("NETSH command got: \n%s\n", string(output))
-	}
-}
-
 func TestExclusions(t *testing.T) {
 	if runtime.GOOS == "windows" {
-		cmd := exec.Command(/*"cmd", "/C",*/ "netsh", "interface",  "ipv4",  "show",  "excludedportrange", "protocol=tcp")
-		output, err := cmd.CombinedOutput()
-		require.NoError(t, err)
-
-		exclusions := getExclusionsList(string(output), t)
+		exclusions := createExclustionsList(t)
 		fmt.Printf(">>>>>> Got %d exclusion pairs\n", len(exclusions))
 		for _, p := range exclusions {
 			fmt.Printf("\t%v\n", p)
 		}
 
-		fmt.Printf("NETSH command got: \n%s\n", string(output))
-
 		port := GetAvailablePort(t, exclusions)
-		fmt.Printf("Got port %d\n", port)
+		fmt.Printf("Got first port %d\n", port)
 
 		// HAK!  Add something we know will cause exclusions
 		newExclude := portpair{strconv.Itoa(int(port)), strconv.Itoa(int(port)+15)}
@@ -97,6 +76,16 @@ Start Port    End Port
 
 	emptyExclusions := getExclusionsList(emptyExclusionsText, t)
 	fmt.Printf("Empty got %d pairs\n", len(emptyExclusions))
+}
+
+func createExclustionsList(t *testing.T) []portpair {
+	cmd := exec.Command("netsh", "interface",  "ipv4",  "show",  "excludedportrange", "protocol=tcp")
+	output, err := cmd.CombinedOutput()
+	require.NoError(t, err)
+	fmt.Printf("NETSH command got: \n%s\n", string(output))
+
+	exclusions := getExclusionsList(string(output), t)
+	return exclusions
 }
 
 // Get excluded ports on Windows from the command: netsh interface ipv4 show excludedportrange protocol=tcp
