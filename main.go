@@ -2,10 +2,11 @@ package main
 
 import (
     "fmt"
+    "github.com/stretchr/testify/require"
     "net"
     "runtime"
     "strconv"
-    "time"
+    "testing"
 )
 
 type  portpair struct {
@@ -18,7 +19,7 @@ func main() {
     fmt.Printf("%d\n", len(exclusions))
     fmt.Printf("OS? %v \n", runtime.GOOS)
 
-    excluded := 0
+    /*excluded := 0
     isFirstPort := true
 
     for i:=0; i < 30; i++ {
@@ -32,28 +33,18 @@ func main() {
         }
         time.Sleep(100 * time.Millisecond)
     }
-    fmt.Printf("Excluded %d entries\n", excluded)
-}
-
-func wtf(condition bool) {
-    counter := 0
-    var nameOfSomething string
-    if condition {
-        nameOfSomething = "fred"
-        counter++
-    }
-    fmt.Printf("Name %s count %d\n", nameOfSomething, counter)
+    fmt.Printf("Excluded %d entries\n", excluded) */
 }
 
 // This should probably get the exclusions list itself if it's on windows?????
-func GetAvailablePort(exclusions []portpair) uint16 {
+func GetAvailablePort(t *testing.T, exclusions []portpair) uint16 {
     portFound := false
     var port string
     var err error
     for !portFound {
-        endpoint := GetAvailableLocalAddress()
+        endpoint := GetAvailableLocalAddress(t)
         _, port, err = net.SplitHostPort(endpoint)
-        die(err)
+        require.NoError(t, err)
         portFound = true
         if runtime.GOOS == "windows" {   // FIXME FIXME change back to is windows!
             for _, pair := range exclusions {
@@ -67,23 +58,16 @@ func GetAvailablePort(exclusions []portpair) uint16 {
     }
 
     portInt, err := strconv.Atoi(port)
-    //require.NoError(t, err)
-    die(err)
+    require.NoError(t, err)
 
     return uint16(portInt)
 }
 
-func GetAvailableLocalAddress() string {
+func GetAvailableLocalAddress(t *testing.T) string {
     ln, err := net.Listen("tcp", "localhost:0")
-    die(err)
+    require.NoError(t, err)
     // There is a possible race if something else takes this same port before
     // the test uses it, however, that is unlikely in practice.
     defer ln.Close()
     return ln.Addr().String()
-}
-
-func die(e error) {
-    if e != nil {
-        panic(e)
-    }
 }

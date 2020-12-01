@@ -1,9 +1,15 @@
+/**
+ * Based on https://github.com/docker/for-win/issues/3171
+ *
+ * On Windows it appears certain ports get reserved by Hyper-V and net.Listen("tcp", "localhost:0") may return a port
+ * within one of those ranges
+ */
+
 package main
 
 import (
 	"fmt"
 	"github.com/stretchr/testify/require"
-	"net"
 	"os/exec"
 	"runtime"
 	"strconv"
@@ -11,18 +17,8 @@ import (
 	"testing"
 )
 
-func TestOne(t *testing.T) {
+func TestNetSHCommand(t *testing.T) {
 	fmt.Printf("Runtime.GOOS is %v\n", runtime.GOOS)
-	for i:=0; i < 25 ; i++ {
-		ln, err := net.Listen("tcp", "localhost:0")
-		if err != nil {
-			t.Errorf("net.Listen got error %v\n", err)
-		} else {
-			fmt.Printf(">>>> Got address %s\n", ln.Addr().String())
-			ln.Close()
-		}
-	}
-	fmt.Println("It worked!!!")
 
 	if runtime.GOOS == "windows" {
 		fmt.Println(">>>>> We're on windows")
@@ -50,20 +46,21 @@ func TestExclusions(t *testing.T) {
 
 		fmt.Printf("NETSH command got: \n%s\n", string(output))
 
-		port := GetAvailablePort(exclusions)
+		port := GetAvailablePort(t, exclusions)
 		fmt.Printf("Got port %d\n", port)
 
-		// Hack!  Add something we know will cause exclusions
+		// HAK!  Add something we know will cause exclusions
 		newExclude := portpair{strconv.Itoa(int(port)), strconv.Itoa(int(port)+15)}
 		exclusions = append(exclusions, newExclude)
 		fmt.Printf("Added %v to exclusions\n", newExclude)
 
-		secondPort := GetAvailablePort(exclusions)
+		secondPort := GetAvailablePort(t, exclusions)
 		fmt.Printf("Got seondPort %d\n", secondPort)
+		require.Equal(t, port + 16, secondPort)
 	}
 }
 
-func TestTwo(t *testing.T) {
+func TestHardcodedExclusions(t *testing.T) {
 	// If emtpy it looks like this:
 	/*
 
