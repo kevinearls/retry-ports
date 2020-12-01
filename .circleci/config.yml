@@ -25,3 +25,6 @@ jobs:
       - run:
           name: Unit tests
           command: go test -v ./...
+      - run:
+          name: netstat
+          command: netstat -ano
