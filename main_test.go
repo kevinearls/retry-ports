@@ -10,6 +10,7 @@ package main
 import (
 	"fmt"
 	"github.com/stretchr/testify/require"
+	"log"
 	"net"
 	"os/exec"
 	"runtime"
@@ -20,28 +21,17 @@ import (
 
 func TestExclusions(t *testing.T) {
 	if runtime.GOOS == "windows" {
-		//exclusions := createExclustionsList(t)
-		//fmt.Printf(">>>>>> Got %d exclusion pairs\n", len(exclusions))
-		//for _, p := range exclusions {
-		//	fmt.Printf("\t%v\n", p)
-		//}
-
 		port := GetAvailablePort(t)
-		fmt.Printf("Got first port %d\n", port)
-
-		// HACK!  Add something we know will cause exclusions
-		//newExclude := portpair{strconv.Itoa(int(port)), strconv.Itoa(int(port)+15)}
-		//exclusions = append(exclusions, newExclude)
-		//fmt.Printf("Added %v to exclusions\n", newExclude)
+		fmt.Printf("Got first port %d\n", int(port))
 
 		secondPort := GetAvailablePort(t)
-		fmt.Printf("Got seondPort %d\n", secondPort)
+		fmt.Printf("Got seondPort %d\n", int(secondPort))
 		require.Equal(t, port + 16, secondPort)
 	} else {
 		port := GetAvailablePort(t)
-		fmt.Printf("Got first port %d\n", port)
+		fmt.Printf("Got first port %d\n", int(port))
 		secondPort := GetAvailablePort(t)
-		fmt.Printf("Got seondPort %d\n", secondPort)
+		fmt.Printf("Got secondPort %d\n", int(secondPort))
 		require.Equal(t, port + 1, secondPort)  // Is this always true?
 	}
 }
@@ -51,17 +41,8 @@ type  portpair struct {
 	last string
 }
 
-func TestHardcodedExclusions(t *testing.T) {
-	// If emtpy it looks like this:
-	/*
-
-	Protocol tcp Port Exclusion Ranges
-
-	Start Port    End Port
-	----------    --------
-
-	* - Administered port exclusions.
-	 */
+func TestGetExclusionsList(t *testing.T) {
+	// Test two examples of typical output from "netsh interface ipv4 show excludedportrange protocol=tcp"
 	emptyExclusionsText :=`
 
 Protocol tcp Port Exclusion Ranges
@@ -81,13 +62,10 @@ Start Port    End Port
 * - Administered port exclusions.
 `
 	exclusions := getExclusionsList(exclusionsText, t)
-	fmt.Printf("Added %d pairs to exclusion list\n", len(exclusions))
-	for _, p := range exclusions {
-		fmt.Printf("\t%v\n", p)
-	}
+	require.Equal(t, len(exclusions), 2)
 
 	emptyExclusions := getExclusionsList(emptyExclusionsText, t)
-	fmt.Printf("Empty got %d pairs\n", len(emptyExclusions))
+	require.Equal(t, len(emptyExclusions), 0)
 }
 
 func createExclustionsList(t *testing.T) []portpair {
@@ -139,13 +117,13 @@ func getExclusionsList(exclusionsText string, t *testing.T) []portpair {
 
 func GetAvailablePort(t *testing.T) uint16 {
 	var exclusions [] portpair
+	portFound := false
+	var port string
+	var err error
 	if runtime.GOOS == "windows" {
 		exclusions = createExclustionsList(t)
 	}
 
-	portFound := false
-	var port string
-	var err error
 	for !portFound {
 		endpoint := GetAvailableLocalAddress(t)
 		_, port, err = net.SplitHostPort(endpoint)
@@ -154,7 +132,7 @@ func GetAvailablePort(t *testing.T) uint16 {
 		if runtime.GOOS == "windows" {
 			for _, pair := range exclusions {
 				if port >= pair.first && port <= pair.last {
-					fmt.Printf(">>>>>>>>> Excluded %s because of range %s to %s\n", port, pair.first, pair.last)  // TODO change to debug line or remove
+					log.Printf(">>>>>>>>> Excluded port %s because of range %s to %s\n", port, pair.first, pair.last)
 					portFound = false
 					break
 				}
