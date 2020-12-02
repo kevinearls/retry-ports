@@ -41,7 +41,7 @@ type  portpair struct {
 	last string
 }
 
-func TestGetExclusionsList(t *testing.T) {
+func TestCreateExclusionsList(t *testing.T) {
 	// Test two examples of typical output from "netsh interface ipv4 show excludedportrange protocol=tcp"
 	emptyExclusionsText :=`
 
@@ -61,41 +61,24 @@ Start Port    End Port
 
 * - Administered port exclusions.
 `
-	exclusions := getExclusionsList(exclusionsText, t)
+	exclusions := createExclusionsList(exclusionsText, t)
 	require.Equal(t, len(exclusions), 2)
 
-	emptyExclusions := getExclusionsList(emptyExclusionsText, t)
+	emptyExclusions := createExclusionsList(emptyExclusionsText, t)
 	require.Equal(t, len(emptyExclusions), 0)
 }
 
-func createExclustionsList(t *testing.T) []portpair {
+func getExclusionsList(t *testing.T) []portpair {
 	cmd := exec.Command("netsh", "interface",  "ipv4",  "show",  "excludedportrange", "protocol=tcp")
 	output, err := cmd.CombinedOutput()
 	require.NoError(t, err)
-	fmt.Printf("NETSH command got: \n%s\n", string(output))   //FIXME remove
 
-	exclusions := getExclusionsList(string(output), t)
-
-	/// FIXME FIXME FIXME remove, hack for testing
-	// HACK!  Add something we know will cause exclusions
-	//
-	var port string
-	endpoint := GetAvailableLocalAddress(t)
-	_, port, err = net.SplitHostPort(endpoint)
-	require.NoError(t, err)
-
-	stupid, _ := strconv.Atoi(port)
-	p2:= strconv.Itoa(stupid + 10)
-	newExclude := portpair{port, p2}
-	exclusions = append(exclusions, newExclude)
-	fmt.Printf("Added %v to exclusions\n", newExclude)
-	// End of HACK
-
+	exclusions := createExclusionsList(string(output), t)
 	return exclusions
 }
 
 // Get excluded ports on Windows from the command: netsh interface ipv4 show excludedportrange protocol=tcp
-func getExclusionsList(exclusionsText string, t *testing.T) []portpair {
+func createExclusionsList(exclusionsText string, t *testing.T) []portpair {
 	exclusions := []portpair{}
 
 	parts := strings.Split(exclusionsText, "--------")
@@ -114,14 +97,13 @@ func getExclusionsList(exclusionsText string, t *testing.T) []portpair {
 	return exclusions
 }
 
-
 func GetAvailablePort(t *testing.T) uint16 {
 	var exclusions [] portpair
 	portFound := false
 	var port string
 	var err error
 	if runtime.GOOS == "windows" {
-		exclusions = createExclustionsList(t)
+		exclusions = getExclusionsList(t)
 	}
 
 	for !portFound {
@@ -132,7 +114,7 @@ func GetAvailablePort(t *testing.T) uint16 {
 		if runtime.GOOS == "windows" {
 			for _, pair := range exclusions {
 				if port >= pair.first && port <= pair.last {
-					log.Printf(">>>>>>>>> Excluded port %s because of range %s to %s\n", port, pair.first, pair.last)
+					log.Printf("Excluded port %s because of range %s to %s\n", port, pair.first, pair.last)
 					portFound = false
 					break
 				}
@@ -146,6 +128,9 @@ func GetAvailablePort(t *testing.T) uint16 {
 	return uint16(portInt)
 }
 
+
+
+/// ****** This is unchanged, don't copy over
 func GetAvailableLocalAddress(t *testing.T) string {
 	ln, err := net.Listen("tcp", "localhost:0")
 	require.NoError(t, err)
