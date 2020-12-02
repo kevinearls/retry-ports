@@ -26,7 +26,7 @@ func TestExclusions(t *testing.T) {
 
 		secondPort := GetAvailablePort(t)
 		fmt.Printf("Got seondPort %d\n", int(secondPort))
-		require.Equal(t, port + 16, secondPort)
+		require.Equal(t, port + 1, secondPort)
 	} else {
 		port := GetAvailablePort(t)
 		fmt.Printf("Got first port %d\n", int(port))
